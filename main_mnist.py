@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
+import os
 import tensorflow as tf
 import numpy as np
 import time
 import mnist_model
-from tsp import *
 import itertools
 from skimage import io, data
 import argparse
@@ -28,8 +28,21 @@ parser.add_argument('--probscale', dest='probscale', type=float, default=1.0,
                     help='probability scale (>=1 prefer)')
 parser.add_argument('--model', dest='model', type=str, default='full',
                     help='model configurations (full/nodop/nopd)')
-parser.add_argument('--noise', dest='noise', type=float, default='noise parameter b',
+parser.add_argument('--noise', dest='noise', type=float, default=0.0,
                     help='noise parameter b')
+
+
+
+
+def KM_match(transformed, ground_truth):
+    from KM import min_KM
+    weight = np.zeros((transformed.shape[0], transformed.shape[0]))
+    for i in range(weight.shape[0]):
+        for j in range(weight.shape[1]):
+            weight[i, j] = np.mean(np.square(transformed[i, :] - ground_truth[j, :]))
+    KMdist, cor = min_KM(weight)
+    KMdist /= weight.shape[0]
+    return KMdist, cor
 
 
 def save_image_collections(seq_images, file_prefix):
@@ -122,22 +135,11 @@ while True:
         print('OK')
         break
     else:
-        print('WARNING: Zipcode\'s stationary distribution is not uniform')
-        break
+        print('Re-generate transition matrix')
+        #print('WARNING: Zipcode\'s stationary distribution is not uniform')
 
 print('Transition Matrix')
 print(trans_matrix)
-
-
-def KM_match(transformed, ground_truth):
-    from KM import min_KM
-    weight = np.zeros((transformed.shape[0], transformed.shape[0]))
-    for i in range(weight.shape[0]):
-        for j in range(weight.shape[1]):
-            weight[i, j] = np.mean(np.square(transformed[i, :] - ground_truth[j, :]))
-    KMdist, cor = min_KM(weight)
-    KMdist /= weight.shape[0]
-    return KMdist, cor
 
 
 train_step = {
@@ -187,9 +189,14 @@ def main():
     # GPU configure
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
-    path = 'mnist_%s_logs_%.2f/' % (args.model, bound)
-    log_file_name = path + 'mnist-scale_' + str(prob_scale) + 'markov_' + \
-                str(train_step['markov']) + 'd_op.log'
+    path = 'mnist_%s_%s_%d_logs_%.2f_%.2f/' % (args.model, args.data, args.seed, prob_scale, bound)
+    if os.path.isdir(path):
+        pass
+    else:
+        print('build new direction ...')
+        os.mkdir(path)
+
+    log_file_name = path + 'mnist_d_op.log'
     np.save(log_file_name + '.data.trans', np.transpose(trans_matrix, (0, 1)))
     with open(log_file_name, 'w') as f:
         f.write(time.strftime('%Y.%m.%d',time.localtime(time.time())) + '\n')

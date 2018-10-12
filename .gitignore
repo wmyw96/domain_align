@@ -1,0 +1,5 @@
+MNIST-data/
+__pycache__/
+model/
+mnist_full_zipcode_123456_logs_1.00_0.00/
+
