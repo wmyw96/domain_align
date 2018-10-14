@@ -1,4 +1,4 @@
-# Unsupervised Domain Translation with Domain Alignment
+# Unsupervised Domain Translation with Alignment Guarantees
 
 Code for 'Unsupervised Domain Translation with Alignment Guarantees'
 
