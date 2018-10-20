@@ -173,7 +173,7 @@ class UniMappingGAN:
         #current = []
         real_sp = tf.reshape(real, [self.seq_len // self.n_concats, self.n_concats, self.embed_dim])
         fake_sp = tf.reshape(fake, [self.seq_len // self.n_concats, self.n_concats, self.embed_dim])
-        alpha = tf.random_uniform([self.seq_len // self.n_concats, self.n_concats, 1], 0, 1)
+        alpha = tf.random_uniform([self.seq_len // self.n_concats, self.n_concats, 1], 0, 1, seed=123456)
         out = real_sp * alpha + (1 - alpha) * fake_sp
         print('M_I' + str(out.get_shape()))
         return self.markov(out)
@@ -194,7 +194,7 @@ class UniMappingGAN:
         current = []
         for i in range(self.n_concats):
             alpha = tf.random_uniform([self.seq_len // self.n_concats,
-                                       1, 1, 1], 0.0, 1.0)
+                                       1, 1, 1], 0.0, 1.0, seed=123456)
             real_x = real_sp[:, i, :, :, :]
             fake_x = fake_sp[:, i, :, :, :]
             current.append(real_x * alpha + (1 - alpha) * fake_x)
@@ -212,10 +212,10 @@ class UniMappingGAN:
             self.inner_product = tf.matmul(self.embeddings, self.embeddings,
                                            transpose_b=True)
             self.loss_inner_product = tf.reduce_sum(tf.square(self.inner_product))
-            noise = tf.random_normal([self.seq_len, self.embed_dim], 0.0, 0.05 * self.n_decay)
+            noise = tf.random_normal([self.seq_len, self.embed_dim], 0.0, 0.05 * self.n_decay, seed=123456)
             self.b = tf.matmul(self.label, self.embeddings) + noise
             self.ora_b = tf.matmul(self.olabel, self.embeddings) + noise
-
+        
         with tf.variable_scope("generator-img2lb"):
             self.a2b = self.gen_img2embed(self.a, name='g_img2lb')
         print('img2lb shape = ' + str(self.a2b.get_shape()))

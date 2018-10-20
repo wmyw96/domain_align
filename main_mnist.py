@@ -118,7 +118,10 @@ while True:
         trans_matrix = np.exp(trans_matrix * prob_scale)
         trans_matrix = trans_matrix / np.sum(trans_matrix, 0, keepdims=True)
 
-    trans_matrix2 = random_noise(trans_matrix, bound)
+    if np.abs(args.noise) > 1e-9:
+        trans_matrix2 = random_noise(trans_matrix, bound)
+    else:
+        trans_matrix2 = trans_matrix
 
     t2 = np.dot(trans_matrix, trans_matrix)
     t4 = np.dot(t2, t2)
@@ -144,6 +147,7 @@ print(trans_matrix)
 
 train_step = {
     'epochs': 21,
+    'test_logging_step': 100,
     'logging_step': 100,
     'seq_len': 200,
     'dim': 23,
@@ -219,10 +223,10 @@ def main():
                     f.write(',')
                 f.write('{:.8f}'.format(trans_matrix2[digit2, digit1]))
             f.write('\n')
-
+    tf.set_random_seed(123456)
     with tf.Session(config=config) as s:
         # CycleGAN Model
-
+        #tf.set_random_seed(123456)
         n_concat = 2
         if args.model == 'nopd':
             n_concat = 1
@@ -235,7 +239,6 @@ def main():
 
         # Initializing
         s.run(tf.global_variables_initializer())
-
         global_step = 0
 
         mses = []
@@ -252,7 +255,7 @@ def main():
             
             for i in range(1000):
                 n_decay = 0.5 * max((20000 - global_step + 0.0) / 20000, 0) + 0.5
-                if (global_step + 1) % train_step['logging_step'] == 0:
+                if (global_step + 1) % train_step['test_logging_step'] == 0:
                     accs = []
                     bz = train_step['seq_len']
                     for ii in range(test_images.shape[0] // train_step['seq_len']):
@@ -328,7 +331,7 @@ def main():
                 for _ in range(model.n_train_critic):
                     a_img, a_label = sample_image_seq(train_step['seq_len'])
                     b_img, b_label = sample_image_seq2(train_step['seq_len'])
-                    _ = s.run([model.d_op],
+                    _ = s.run(model.d_op,
                               feed_dict={model.image: a_img,
                                          model.label: b_label,
                                          model.is_training: True,
