@@ -212,7 +212,7 @@ class UniMappingGAN:
             self.inner_product = tf.matmul(self.embeddings, self.embeddings,
                                            transpose_b=True)
             self.loss_inner_product = tf.reduce_sum(tf.square(self.inner_product))
-            noise = tf.random_normal([self.seq_len, self.embed_dim], 0.0, 0.05 * self.n_decay, seed=123456)
+            noise = tf.random_normal([self.seq_len, self.embed_dim], 0.0, 0.04 * self.n_decay, seed=123456)
             self.b = tf.matmul(self.label, self.embeddings) + noise
             self.ora_b = tf.matmul(self.olabel, self.embeddings) + noise
         
